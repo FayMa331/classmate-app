@@ -31,7 +31,7 @@ function Footer() {
   )
 }
 
-// Home Page - 淡紫色背景
+// Home Page
 function Home() {
   return (
     <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', minHeight: '80vh' }}>
@@ -166,22 +166,20 @@ function Home() {
   )
 }
 
-// Browse Page - 淡紫色背景 + 紫色头像
 function BrowseStudents() {
   const [students, setStudents] = React.useState([])
   const [loading, setLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  // 获取学生数据
   React.useEffect(() => {
     const fetchStudents = async () => {
       try {
         setLoading(true)
-        const response = await fetch('https://disc-assignment-5-users-api-iyct.onrender.com/api/users')
+        const response = await fetch('http://localhost:3000/users')
         const data = await response.json()
         console.log('Fetched students:', data)
         
-        // 为没有课程数据的学生添加示例课程
+
         const studentsWithClasses = data.map(student => ({
           ...student,
           classes: student.classes || ['CS 111', 'ECON 201', 'MATH 228']
@@ -198,11 +196,14 @@ function BrowseStudents() {
     fetchStudents()
   }, [])
 
-  // 筛选学生
   const filteredStudents = students.filter(student => {
-    const fullName = `${student.firstName} ${student.lastName}`.toLowerCase()
-    const query = searchQuery.toLowerCase()
-    return fullName.includes(query) || student.major.toLowerCase().includes(query)
+
+    const firstName = student.firstName || student.first_name || '';
+    const lastName = student.lastName || student.last_name || '';
+    const fullName = `${firstName} ${lastName}`.toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const email = student.email || '';
+    return fullName.includes(query) || email.toLowerCase().includes(query);
   })
 
   if (loading) {
@@ -249,7 +250,7 @@ function BrowseStudents() {
         }}>
           <input 
             type="text" 
-            placeholder="Search by name or major..."
+            placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -303,8 +304,12 @@ function BrowseStudents() {
         }}>
           {filteredStudents.length > 0 ? (
             filteredStudents.map(student => {
-              // 紫色背景的 UI Avatars
-              const avatarUrl = `https://ui-avatars.com/api/?name=${student.firstName}+${student.lastName}&background=5B21B6&color=fff&size=100&font-size=0.4&bold=true`
+
+              const firstName = student.firstName || student.first_name || 'Unknown';
+              const lastName = student.lastName || student.last_name || 'User';
+              
+
+              const avatarUrl = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=5B21B6&color=fff&size=100&font-size=0.4&bold=true`
               
               return (
                 <div key={student.id} style={{
@@ -316,7 +321,7 @@ function BrowseStudents() {
                 }}>
                   <img 
                     src={avatarUrl}
-                    alt={`${student.firstName} ${student.lastName}`}
+                    alt={`${firstName} ${lastName}`}
                     style={{ 
                       width: '100px', 
                       height: '100px', 
@@ -331,14 +336,14 @@ function BrowseStudents() {
                     color: '#1F2937',
                     marginBottom: '6px'
                   }}>
-                    {student.firstName} {student.lastName}
+                    {firstName} {lastName}
                   </h2>
                   <p style={{ 
                     fontSize: '14px',
                     color: '#6B7280',
                     marginBottom: '20px'
                   }}>
-                    {student.major} • {student.year || 'Junior'}
+                    Computer Science • Junior
                   </p>
                   
                   {/* Classes Tags - 竖向排列 */}
@@ -402,7 +407,6 @@ function BrowseStudents() {
   )
 }
 
-// Profile Page - 淡紫色背景 + 紫色头像
 function Profile() {
   const { id } = useParams()
   const [student, setStudent] = React.useState(null)
@@ -412,11 +416,12 @@ function Profile() {
     const fetchStudent = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`https://disc-assignment-5-users-api-iyct.onrender.com/api/users/${id}`)
+        // 改用你自己的 API
+        const response = await fetch(`http://localhost:3000/users/${id}`)
         const data = await response.json()
         console.log('Fetched student:', data)
         
-        // 为没有课程数据的学生添加示例课程
+        // 添加默认课程
         if (!data.classes || data.classes.length === 0) {
           data.classes = ['CS 111', 'ECON 201', 'MATH 228', 'STAT 210']
         }
@@ -452,8 +457,10 @@ function Profile() {
     return <div style={{ textAlign: 'center', padding: '40px' }}>Student not found</div>
   }
 
-  // 紫色背景的 UI Avatars
-  const avatarUrl = `https://ui-avatars.com/api/?name=${student.firstName}+${student.lastName}&background=5B21B6&color=fff&size=140&font-size=0.4&bold=true`
+  // 支持两种字段格式
+  const firstName = student.firstName || student.first_name || 'Unknown';
+  const lastName = student.lastName || student.last_name || 'User';
+  const avatarUrl = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=5B21B6&color=fff&size=140&font-size=0.4&bold=true`
 
   return (
     <div style={{ 
@@ -473,7 +480,7 @@ function Profile() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <img 
             src={avatarUrl}
-            alt={`${student.firstName} ${student.lastName}`}
+            alt={`${firstName} ${lastName}`}
             style={{
               width: '140px',
               height: '140px',
@@ -489,14 +496,14 @@ function Profile() {
             marginBottom: '8px',
             letterSpacing: '-0.5px'
           }}>
-            {student.firstName} {student.lastName}
+            {firstName} {lastName}
           </h1>
           <p style={{ 
             fontSize: '16px', 
             color: '#6B7280',
             fontWeight: '400'
           }}>
-            {student.major} • {student.year || 'Junior'} • Class of {student.graduationYear}
+            Computer Science • Junior • Class of 2026
           </p>
         </div>
 
@@ -516,7 +523,7 @@ function Profile() {
             color: '#4B5563',
             marginLeft: '12px'
           }}>
-            {student.bio}
+            Hi! I'm a student at Northwestern University.
           </p>
         </div>
 
@@ -570,11 +577,6 @@ function Profile() {
             <div style={{ marginBottom: '8px' }}>
               📧 {student.email}
             </div>
-            {student.discord && (
-              <div>
-                💬 Discord: {student.discord}
-              </div>
-            )}
           </div>
         </div>
 
