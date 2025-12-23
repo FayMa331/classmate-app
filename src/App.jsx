@@ -1,9 +1,13 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Link, useParams } from 'react-router-dom'
 import './App.css'
+import { AuthProvider } from './context/AuthContext'  
+import { useAuth } from './context/AuthContext'  
 
-// NavBar Component
+// NavBar Component with Auth Context
 function NavBar() {
+  const { user, isLoggedIn, logout } = useAuth()
+
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -13,8 +17,54 @@ function NavBar() {
         <ul className="nav-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/browse">Browse Students</Link></li>
-          <li><Link to="/profile/1">My Profile</Link></li>
-          <li><a href="#" className="btn-signin">Sign In</a></li>
+          
+          {isLoggedIn ? (
+            <>
+              <li><Link to="/profile/1">My Profile</Link></li>
+              <li>
+                <span style={{ color: '#5B21B6', marginRight: '16px' }}>
+                  Welcome, {user?.firstName || user?.name || 'User'}!
+                </span>
+              </li>
+              <li>
+                <button 
+                  onClick={logout}
+                  style={{
+                    background: '#5B21B6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 20px',
+                    borderRadius: '20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Logout
+                </button>
+              </li>
+            </>
+          ) : (
+            <>
+              <li><a href="#" className="btn-signin">Sign In</a></li>
+              <li>
+                <a 
+                  href="#" 
+                  style={{
+                    background: '#5B21B6',
+                    color: 'white',
+                    padding: '8px 20px',
+                    borderRadius: '20px',
+                    textDecoration: 'none',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Sign Up
+                </a>
+              </li>
+            </>
+          )}
         </ul>
       </div>
     </nav>
@@ -33,6 +83,18 @@ function Footer() {
 
 // Home Page
 function Home() {
+  const { login, isLoggedIn } = useAuth()
+
+  const handleTestLogin = () => {
+    login({
+      id: 1,
+      firstName: 'Test',
+      lastName: 'User',
+      name: 'Test User',
+      email: 'test@northwestern.edu'
+    })
+  }
+
   return (
     <div style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)', minHeight: '80vh' }}>
       {/* Hero Section */}
@@ -71,11 +133,33 @@ function Home() {
             textDecoration: 'none',
             fontSize: '18px',
             fontWeight: '600',
-            boxShadow: '0 4px 14px rgba(91, 33, 182, 0.4)'
+            boxShadow: '0 4px 14px rgba(91, 33, 182, 0.4)',
+            marginRight: '16px'
           }}
         >
           Get Started
         </Link>
+        
+        {/* Test Login Button */}
+        {!isLoggedIn && (
+          <button
+            onClick={handleTestLogin}
+            style={{
+              display: 'inline-block',
+              backgroundColor: '#10B981',
+              color: 'white',
+              padding: '16px 48px',
+              borderRadius: '30px',
+              border: 'none',
+              fontSize: '18px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            Test Login
+          </button>
+        )}
       </div>
 
       {/* Features Section */}
@@ -179,7 +263,6 @@ function BrowseStudents() {
         const data = await response.json()
         console.log('Fetched students:', data)
         
-
         const studentsWithClasses = data.map(student => ({
           ...student,
           classes: student.classes || ['CS 111', 'ECON 201', 'MATH 228']
@@ -197,7 +280,6 @@ function BrowseStudents() {
   }, [])
 
   const filteredStudents = students.filter(student => {
-
     const firstName = student.firstName || student.first_name || '';
     const lastName = student.lastName || student.last_name || '';
     const fullName = `${firstName} ${lastName}`.toLowerCase();
@@ -304,11 +386,8 @@ function BrowseStudents() {
         }}>
           {filteredStudents.length > 0 ? (
             filteredStudents.map(student => {
-
               const firstName = student.firstName || student.first_name || 'Unknown';
               const lastName = student.lastName || student.last_name || 'User';
-              
-
               const avatarUrl = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=5B21B6&color=fff&size=100&font-size=0.4&bold=true`
               
               return (
@@ -346,7 +425,6 @@ function BrowseStudents() {
                     Computer Science • Junior
                   </p>
                   
-                  {/* Classes Tags - 竖向排列 */}
                   <div style={{ 
                     display: 'flex', 
                     flexDirection: 'column',
@@ -416,12 +494,10 @@ function Profile() {
     const fetchStudent = async () => {
       try {
         setLoading(true)
-        // 改用你自己的 API
         const response = await fetch(`http://localhost:3000/users/${id}`)
         const data = await response.json()
         console.log('Fetched student:', data)
         
-        // 添加默认课程
         if (!data.classes || data.classes.length === 0) {
           data.classes = ['CS 111', 'ECON 201', 'MATH 228', 'STAT 210']
         }
@@ -457,7 +533,6 @@ function Profile() {
     return <div style={{ textAlign: 'center', padding: '40px' }}>Student not found</div>
   }
 
-  // 支持两种字段格式
   const firstName = student.firstName || student.first_name || 'Unknown';
   const lastName = student.lastName || student.last_name || 'User';
   const avatarUrl = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=5B21B6&color=fff&size=140&font-size=0.4&bold=true`
@@ -476,7 +551,6 @@ function Profile() {
         padding: '50px 60px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
-        {/* Header Section */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <img 
             src={avatarUrl}
@@ -507,7 +581,6 @@ function Profile() {
           </p>
         </div>
 
-        {/* About Me Section */}
         <div style={{ marginBottom: '36px', textAlign: 'left' }}>
           <h2 style={{ 
             fontSize: '20px', 
@@ -527,7 +600,6 @@ function Profile() {
           </p>
         </div>
 
-        {/* Current Classes Section */}
         <div style={{ marginBottom: '36px', textAlign: 'left' }}>
           <h2 style={{ 
             fontSize: '20px', 
@@ -558,7 +630,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* Contact Section */}
         <div style={{ marginBottom: '40px', textAlign: 'left' }}>
           <h2 style={{ 
             fontSize: '20px', 
@@ -580,7 +651,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div style={{ 
           display: 'flex', 
           gap: '16px',
@@ -621,15 +691,17 @@ function Profile() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <NavBar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/browse" element={<BrowseStudents />} />
-        <Route path="/profile/:id" element={<Profile />} />
-      </Routes>
-      <Footer />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/browse" element={<BrowseStudents />} />
+          <Route path="/profile/:id" element={<Profile />} />
+        </Routes>
+        <Footer />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
