@@ -4,6 +4,9 @@ import './App.css'
 import { AuthProvider } from './context/AuthContext'  
 import { useAuth } from './context/AuthContext'  
 
+// API URL configuration
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 // NavBar Component with Auth Context
 function NavBar() {
   const { user, isLoggedIn, logout } = useAuth()
@@ -259,7 +262,7 @@ function BrowseStudents() {
     const fetchStudents = async () => {
       try {
         setLoading(true)
-        const response = await fetch('http://localhost:3000/users')
+        const response = await fetch(`${API_URL}/users`)
         const data = await response.json()
         console.log('Fetched students:', data)
         
@@ -494,7 +497,7 @@ function Profile() {
     const fetchStudent = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`http://localhost:3000/users/${id}`)
+        const response = await fetch(`${API_URL}/users/${id}`)
         const data = await response.json()
         console.log('Fetched student:', data)
         
